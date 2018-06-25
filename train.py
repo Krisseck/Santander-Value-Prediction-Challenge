@@ -10,8 +10,8 @@ from keras.constraints import max_norm
 from keras.optimizers import Adam
 import keras.backend as K
 
-epochs = 5
-batch_size = 10
+epochs = 2
+batch_size = 16
 
 source_csv = 'train.csv'
 source_csv_delimiter = ','
@@ -32,7 +32,8 @@ source_data /= 1000000000
 
 for i, row in enumerate(source_data):
   trainX[i] = row[1:]
-  trainY[i] = row[0]
+  # the scale for target is 10^7
+  trainY[i] = row[0] * 100
 
 # make it divisable by batch size
 remainder = len(trainX) % batch_size
@@ -48,18 +49,25 @@ print(trainY[10])
 # create and fit model
 model = Sequential()
 
-model.add(Dense(50, input_shape=(trainX.shape[1], ), activation='relu'))
+# Got 2.0 on Kaggle, loss: 0.4614 - val_loss: 0.4303
+'''
+trainX = np.expand_dims(trainX, axis=2)
+
+model.add(Conv1D(input_shape=(trainX.shape[1], 1), filters=200, kernel_size=8, activation='relu'))
+model.add(MaxPooling1D(4))
 model.add(Dropout(0.5))
-model.add(Dense(150, activation='relu'))
+model.add(Flatten())
+model.add(Dense(100, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(1, activation='sigmoid'))
+'''
 
 def root_mean_squared_logarithmic_error(y_true, y_pred):
     y_pred_log = K.log(K.clip(y_pred, K.epsilon(), None) + 1.)
     y_true_log = K.log(K.clip(y_true, K.epsilon(), None) + 1.)
     return K.sqrt(K.mean(K.square(y_pred_log - y_true_log), axis = -1))
 
-model.compile(loss=root_mean_squared_logarithmic_error, optimizer=Adam(lr=0.0001))
+model.compile(loss='mae', optimizer='adam')
 
 while True:
   model.fit(trainX, trainY, epochs=epochs, batch_size=batch_size, validation_split=0.10)
