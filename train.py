@@ -7,10 +7,11 @@ import math
 from keras.models import Sequential, load_model
 from keras.layers import Conv1D, MaxPooling1D, GlobalAveragePooling1D, Embedding, LSTM, Dropout, Dense, Flatten
 from keras.constraints import max_norm
-import time
+from keras.optimizers import Adam
+import keras.backend as K
 
 epochs = 5
-batch_size = 20
+batch_size = 10
 
 source_csv = 'train.csv'
 source_csv_delimiter = ','
@@ -47,17 +48,19 @@ print(trainY[10])
 # create and fit model
 model = Sequential()
 
-trainX = np.expand_dims(trainX, axis=2)
-
-model.add(Dense(1000, input_shape=(trainX.shape[1], 1), activation='relu'))
-model.add(Flatten())
+model.add(Dense(50, input_shape=(trainX.shape[1], ), activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(150, activation='relu'))
+model.add(Dropout(0.5))
 model.add(Dense(1, activation='sigmoid'))
 
-model.compile(loss='mae', optimizer='adam')
+def root_mean_squared_logarithmic_error(y_true, y_pred):
+    y_pred_log = K.log(K.clip(y_pred, K.epsilon(), None) + 1.)
+    y_true_log = K.log(K.clip(y_true, K.epsilon(), None) + 1.)
+    return K.sqrt(K.mean(K.square(y_pred_log - y_true_log), axis = -1))
 
-def root_mean_squared_error(y_true, y_pred):
-  return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1)) 
+model.compile(loss=root_mean_squared_logarithmic_error, optimizer=Adam(lr=0.0001))
 
 while True:
-  model.fit(trainX, trainY, epochs=epochs, batch_size=batch_size, validation_split=0.2)
+  model.fit(trainX, trainY, epochs=epochs, batch_size=batch_size, validation_split=0.10)
   model.save('model.h5')
