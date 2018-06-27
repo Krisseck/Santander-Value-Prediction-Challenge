@@ -8,7 +8,7 @@ import keras.backend as K
 
 epochs = 5
 batch_size = 20
-chunk_size = 1000
+chunk_size = 4000
 
 source_csv = 'test.csv'
 source_csv_delimiter = ','
@@ -32,7 +32,6 @@ for chunk in pd.read_csv(source_csv, chunksize=chunk_size, header=0, skiprows=0)
     input_row /= 1000000000
     input_rows.append(input_row)
   input_rows = np.array(input_rows)
-  input_rows = np.expand_dims(input_rows,axis=2)
   scores = model.predict(input_rows)
   i = 0
   for index, row in chunk.iterrows():
