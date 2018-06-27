@@ -1,3 +1,5 @@
 venv
 *.h5
 *.csv
+train_x.npy
+train_y.npy
