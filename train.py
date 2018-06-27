@@ -10,8 +10,8 @@ from keras.constraints import max_norm
 from keras.optimizers import Adam
 import keras.backend as K
 
-epochs = 2
-batch_size = 16
+epochs = 5
+batch_size = 4
 
 source_csv = 'train.csv'
 source_csv_delimiter = ','
@@ -62,6 +62,12 @@ model.add(Dropout(0.5))
 model.add(Dense(1, activation='sigmoid'))
 '''
 
+model.add(Dense(1000, input_shape=(trainX.shape[1], ), activation='linear'))
+model.add(Dropout(0.5))
+model.add(Dense(5000, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(1, activation='linear'))
+
 def root_mean_squared_logarithmic_error(y_true, y_pred):
     y_pred_log = K.log(K.clip(y_pred, K.epsilon(), None) + 1.)
     y_true_log = K.log(K.clip(y_true, K.epsilon(), None) + 1.)
@@ -70,5 +76,5 @@ def root_mean_squared_logarithmic_error(y_true, y_pred):
 model.compile(loss='mae', optimizer='adam')
 
 while True:
-  model.fit(trainX, trainY, epochs=epochs, batch_size=batch_size, validation_split=0.10)
+  model.fit(trainX, trainY, epochs=epochs, batch_size=batch_size, validation_split=0.1)
   model.save('model.h5')
